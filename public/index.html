@@ -3,208 +3,481 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>מעקב חתונות 💍</title>
+<title>מעקב חתונות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f4ff; color: #2d2d2d; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  header {
-    background: linear-gradient(135deg, #7c3aed, #db2777);
-    color: white;
-    padding: 20px 30px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-  }
-  header h1 { font-size: 1.6rem; }
-  header span { font-size: 2rem; }
+:root {
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #F7F7F8;
+  --color-border: #E5E5E5;
+  --color-text: #111111;
+  --color-text-secondary: #666666;
+  --color-accent: #111111;
+  --color-success: #16a34a;
+  --color-success-bg: #f0fdf4;
+  --color-warning-bg: #fefce8;
+  --color-warning: #a16207;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
 
-  .stats {
-    display: flex;
-    gap: 16px;
-    padding: 20px 30px;
-    flex-wrap: wrap;
-  }
-  .stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 16px 24px;
-    flex: 1;
-    min-width: 140px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    text-align: center;
-  }
-  .stat-card .num { font-size: 2rem; font-weight: 700; color: #7c3aed; }
-  .stat-card .label { font-size: 0.85rem; color: #888; margin-top: 4px; }
+body {
+  font-family: 'Heebo', sans-serif;
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+  font-size: 16px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
 
-  .layout {
-    display: grid;
-    grid-template-columns: 1fr 380px;
-    gap: 20px;
-    padding: 0 30px 30px;
-  }
+/* ── Header ── */
+header {
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 32px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
 
-  .card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  }
-  .card h2 { font-size: 1.1rem; margin-bottom: 16px; color: #7c3aed; }
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-  #calendar { font-size: 0.9rem; }
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--color-text);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
 
-  .wedding-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  .wedding-item:last-child { border-bottom: none; }
-  .wedding-emoji { font-size: 1.8rem; flex-shrink: 0; }
-  .wedding-info { flex: 1; }
-  .wedding-names { font-weight: 600; font-size: 0.95rem; }
-  .wedding-date { font-size: 0.8rem; color: #888; margin-top: 2px; }
-  .gift-badge {
-    background: #f0fdf4;
-    color: #16a34a;
-    border: 1px solid #bbf7d0;
-    border-radius: 20px;
-    padding: 3px 10px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .gift-badge.empty {
-    background: #fef9c3;
-    color: #a16207;
-    border-color: #fef08a;
-  }
-  .delete-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #ccc;
-    font-size: 1rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
-  .delete-btn:hover { color: #ef4444; background: #fff1f2; }
+.header-meta {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
 
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: #aaa;
-  }
-  .empty-state .big { font-size: 2.5rem; margin-bottom: 8px; }
+/* ── Main layout ── */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
 
-  @media (max-width: 800px) {
-    .layout { grid-template-columns: 1fr; padding: 0 16px 24px; }
-    .stats { padding: 16px; }
-  }
+/* ── Stats row ── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+/* ── Content grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 16px;
+}
+
+/* ── Card ── */
+.card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.card-body {
+  padding: 24px;
+}
+
+/* ── Calendar ── */
+.fc { font-family: 'Heebo', sans-serif !important; font-size: 13px; }
+.fc .fc-button-primary { background: var(--color-text) !important; border-color: var(--color-text) !important; font-family: 'Heebo', sans-serif; font-size: 13px; }
+.fc .fc-button-primary:hover { background: #333 !important; }
+.fc .fc-event { border-radius: var(--radius-sm) !important; font-size: 12px !important; }
+.fc .fc-daygrid-day.fc-day-today { background: var(--color-bg-secondary) !important; }
+.fc .fc-col-header-cell-cushion, .fc .fc-daygrid-day-number { color: var(--color-text) !important; text-decoration: none !important; }
+
+/* ── Wedding list ── */
+.wedding-list { }
+
+.wedding-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 150ms ease;
+}
+
+.wedding-item:last-child { border-bottom: none; }
+
+.wedding-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+}
+
+.wedding-info { flex: 1; min-width: 0; }
+
+.wedding-names {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wedding-date {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.badge {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 100px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge-success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid #bbf7d0;
+}
+
+.badge-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  border: 1px solid #fef08a;
+}
+
+.delete-btn {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 150ms ease;
+}
+
+.delete-btn:hover {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #e11d48;
+}
+
+/* ── Empty state ── */
+.empty {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin: 0 auto 16px;
+}
+
+.empty-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.empty-desc {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* ── WhatsApp CTA card ── */
+.cta-card {
+  background: var(--color-text);
+  color: white;
+  border-radius: var(--radius-md);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.cta-card h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.cta-card p {
+  font-size: 13px;
+  opacity: 0.7;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.cta-number {
+  font-size: 20px;
+  font-weight: 700;
+  direction: ltr;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.cta-hint {
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  main { padding: 16px; }
+  .stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { padding: 16px; }
+  .stat-value { font-size: 24px; }
+  .grid { grid-template-columns: 1fr; }
+  header { padding: 0 16px; }
+}
 </style>
 </head>
 <body>
 
 <header>
-  <span>💍</span>
-  <h1>מעקב חתונות</h1>
+  <div class="logo">
+    <div class="logo-icon">💍</div>
+    מעקב חתונות
+  </div>
+  <div class="header-meta" id="lastUpdate">מתעדכן...</div>
 </header>
 
-<div class="stats">
-  <div class="stat-card"><div class="num" id="totalCount">0</div><div class="label">חתונות</div></div>
-  <div class="stat-card"><div class="num" id="totalGift">0 ₪</div><div class="label">סה"כ צ׳קים</div></div>
-  <div class="stat-card"><div class="num" id="upcoming">0</div><div class="label">קרובות</div></div>
-</div>
-
-<div class="layout">
-  <div class="card">
-    <h2>📅 לוח שנה</h2>
-    <div id="calendar"></div>
+<main>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value" id="statTotal">0</div>
+      <div class="stat-label">חתונות</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="statGift">₪0</div>
+      <div class="stat-label">סה"כ צ'קים</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="statUpcoming">0</div>
+      <div class="stat-label">קרובות</div>
+    </div>
   </div>
 
-  <div class="card">
-    <h2>🎊 כל החתונות</h2>
-    <div id="weddingList"></div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">לוח שנה</span>
+      </div>
+      <div class="card-body">
+        <div id="calendar"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cta-card">
+        <h3>שלח הזמנה לבוט</h3>
+        <p>העבר הודעת הזמנה לחתונה לבוט — הוא ינתח, יוסיף ללוח ויזכיר לשאול על הצ'ק.</p>
+        <span class="cta-number">+1 (662) 344-5081</span>
+        <span class="cta-hint">WhatsApp Business</span>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">חתונות</span>
+          <span id="listCount" style="font-size:12px;color:var(--color-text-secondary)">0</span>
+        </div>
+        <div class="card-body" style="padding:0 24px" id="weddingList">
+          <div class="empty">
+            <div class="empty-icon">💌</div>
+            <div class="empty-title">אין חתונות עדיין</div>
+            <div class="empty-desc">שלח הזמנה לבוט<br>והיא תופיע כאן</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
+</main>
 
 <script>
 let weddings = [];
 
 async function load() {
-  const res = await fetch('/api/weddings');
-  weddings = await res.json();
-  render();
+  try {
+    const res = await fetch('/api/weddings');
+    weddings = await res.json();
+    render();
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function fmtDate(d) {
+  if (!d) return 'תאריך לא ידוע';
+  return new Date(d).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function fmtMoney(n) {
+  return n ? n.toLocaleString('he-IL') + ' ₪' : null;
 }
 
 function render() {
+  const now = new Date();
+
   // Stats
-  const total = weddings.reduce((s, w) => s + (w.giftAmount || 0), 0);
-  const upcoming = weddings.filter(w => w.date && new Date(w.date) >= new Date()).length;
-  document.getElementById('totalCount').textContent = weddings.length;
-  document.getElementById('totalGift').textContent = total.toLocaleString('he-IL') + ' ₪';
-  document.getElementById('upcoming').textContent = upcoming;
+  const totalGift = weddings.reduce((s, w) => s + (w.giftAmount || 0), 0);
+  const upcoming = weddings.filter(w => w.date && new Date(w.date) >= now).length;
+  document.getElementById('statTotal').textContent = weddings.length;
+  document.getElementById('statGift').textContent = totalGift ? totalGift.toLocaleString('he-IL') + ' ₪' : '₪0';
+  document.getElementById('statUpcoming').textContent = upcoming;
+  document.getElementById('listCount').textContent = weddings.length;
+  document.getElementById('lastUpdate').textContent = 'עדכון: ' + new Date().toLocaleTimeString('he-IL', {hour:'2-digit',minute:'2-digit'});
 
   // List
   const list = document.getElementById('weddingList');
   if (!weddings.length) {
-    list.innerHTML = '<div class="empty-state"><div class="big">💌</div>שלח הזמנה לבוט ויופיע כאן</div>';
+    list.innerHTML = `<div class="empty">
+      <div class="empty-icon">💌</div>
+      <div class="empty-title">אין חתונות עדיין</div>
+      <div class="empty-desc">שלח הזמנה לבוט<br>והיא תופיע כאן</div>
+    </div>`;
   } else {
-    const sorted = [...weddings].sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1);
+    const sorted = [...weddings].sort((a,b) => (a.date||'') < (b.date||'') ? -1 : 1);
     list.innerHTML = sorted.map(w => {
-      const dateStr = w.date ? new Date(w.date).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'תאריך לא ידוע';
       const gift = w.giftAmount
-        ? `<span class="gift-badge">💰 ${w.giftAmount.toLocaleString('he-IL')} ₪</span>`
-        : `<span class="gift-badge empty">צ׳ק לא הוגדר</span>`;
-      return `
-        <div class="wedding-item">
-          <div class="wedding-emoji">💒</div>
-          <div class="wedding-info">
-            <div class="wedding-names">${w.names}</div>
-            <div class="wedding-date">${dateStr}</div>
-          </div>
-          ${gift}
-          <button class="delete-btn" onclick="deleteWedding('${w.id}')" title="מחק">✕</button>
-        </div>`;
+        ? `<span class="badge badge-success">${fmtMoney(w.giftAmount)}</span>`
+        : `<span class="badge badge-warning">ממתין לצ'ק</span>`;
+      return `<div class="wedding-item">
+        <div class="wedding-avatar">💒</div>
+        <div class="wedding-info">
+          <div class="wedding-names">${w.names}</div>
+          <div class="wedding-date">${fmtDate(w.date)}${w.location ? ' · ' + w.location : ''}</div>
+        </div>
+        ${gift}
+        <button class="delete-btn" onclick="del('${w.id}')" title="מחק">✕</button>
+      </div>`;
     }).join('');
   }
 
   // Calendar
-  if (window._calendar) window._calendar.destroy();
-  const calEl = document.getElementById('calendar');
-  window._calendar = new FullCalendar.Calendar(calEl, {
+  if (window._cal) window._cal.destroy();
+  window._cal = new FullCalendar.Calendar(document.getElementById('calendar'), {
     initialView: 'dayGridMonth',
     locale: 'he',
     direction: 'rtl',
-    height: 500,
-    events: weddings.filter(w => w.date).map(w => ({
+    height: 420,
+    headerToolbar: { start: 'prev,next', center: 'title', end: '' },
+    events: weddings.filter(w=>w.date).map(w => ({
       id: w.id,
-      title: '💒 ' + w.names,
+      title: w.names,
       date: w.date,
-      backgroundColor: '#7c3aed',
-      borderColor: '#7c3aed',
+      backgroundColor: '#111',
+      borderColor: '#111',
+      textColor: '#fff',
     })),
-    eventClick: (info) => {
+    eventClick: info => {
       const w = weddings.find(x => x.id === info.event.id);
-      if (w) alert(`💒 ${w.names}\n📅 ${info.event.startStr}\n💰 ${w.giftAmount ? w.giftAmount + ' ₪' : 'לא הוגדר'}`);
+      if (w) alert(`💒 ${w.names}\n📅 ${fmtDate(w.date)}${w.location?'\n📍'+w.location:''}\n💰 ${w.giftAmount ? fmtMoney(w.giftAmount) : 'לא הוגדר'}`);
     }
   });
-  window._calendar.render();
+  window._cal.render();
 }
 
-async function deleteWedding(id) {
+async function del(id) {
   if (!confirm('למחוק חתונה זו?')) return;
   await fetch(`/api/weddings/${id}`, { method: 'DELETE' });
   load();
 }
 
 load();
-setInterval(load, 10000); // refresh every 10s
+setInterval(load, 15000);
 </script>
 </body>
 </html>
