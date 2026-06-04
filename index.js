@@ -125,48 +125,50 @@ async function handleMessage(from, text) {
     return;
   }
 
-  // ── Idle — parse incoming message ──
+  // ── Idle — handle directly without AI ─────────────────────────────
   const data0 = await loadData();
   const dashboardUrl = APP_URL || `http://localhost:${PORT}`;
-  const weddingSummary = data0.weddings.length
-    ? data0.weddings.map(w => `- ${w.names} | ${w.date || 'תאריך לא ידוע'} | ${w.location || 'מיקום לא ידוע'} | צ'ק: ${w.giftAmount ? w.giftAmount + ' ₪' : 'לא הוגדר'}`).join('\n')
-    : 'אין חתונות שמורות עדיין.';
+  const t = text.trim().toLowerCase();
 
-  let result;
-  try {
-    result = await askGemini(
-      `אתה עוזר חכם למעקב חתונות בעברית. שמך הוא "חתניה".
-
-כתובת לוח השנה / האתר שלך: ${dashboardUrl}
-
-חתונות שמורות כרגע:
-${weddingSummary}
-
-נתח את ההודעה והחזר JSON בלבד (ללא markdown):
-{
-  "isWedding": true/false,
-  "isQuestion": true/false,
-  "names": "שמות הזוג או null",
-  "date": "YYYY-MM-DD או null",
-  "location": "מיקום או null",
-  "reply": "תגובה ידידותית וקצרה בעברית"
-}
-
-חוקים:
-- אם זו הזמנה לחתונה → isWedding: true, חלץ פרטים
-- אם שואלים מה החתונות שיש → isQuestion: true, ענה עם רשימה מפורטת מהנתונים
-- אם שואלים מה הכתובת / האתר / לינק → isQuestion: true, ציין את הכתובת: ${dashboardUrl}
-- אחרת → ענה ידידותית`,
-      text
-    );
-  } catch {
-    await sendMessage(from, `שלח לי הזמנה לחתונה ואני אוסיף אותה ללוח השנה 📅\n\nלוח השנה שלך: ${dashboardUrl}`);
+  // Questions about the website URL
+  const isUrlQ = /כתובת|אתר|לינק|link|url|site|whatsapp.bot/.test(t);
+  if (isUrlQ) {
+    await sendMessage(from, `לוח השנה שלך נמצא כאן 👇\n\n${dashboardUrl}`);
     return;
   }
 
-  if (result.isQuestion || (!result.isWedding && !result.isQuestion)) {
-    const reply = result.reply || `שלח לי הזמנה לחתונה ואוסיף אותה ללוח השנה 📅\n\n${dashboardUrl}`;
-    await sendMessage(from, reply);
+  // Questions about existing weddings
+  const isListQ = /איזה חתונות|אילו חתונות|מה החתונות|רשימת חתונות|יש לי חתונות|חתונות שיש|כמה חתונות/.test(t);
+  if (isListQ) {
+    if (!data0.weddings.length) {
+      await sendMessage(from, "אין חתונות שמורות עדיין 📭\nשלח לי הזמנה ואוסיף!");
+    } else {
+      const sorted = [...data0.weddings].sort((a,b) => (a.date||'') < (b.date||'') ? -1 : 1);
+      const list = sorted.map((w, i) => {
+        const d = w.date ? new Date(w.date).toLocaleDateString("he-IL", {day:"numeric", month:"long", year:"numeric"}) : "תאריך לא ידוע";
+        return `${i+1}. 💒 ${w.names}\n   📅 ${d}${w.location ? "\n   📍 " + w.location : ""}\n   💰 ${w.giftAmount ? w.giftAmount.toLocaleString() + " ₪" : "צ'ק לא הוגדר"}`;
+      }).join("\n\n");
+      await sendMessage(from, `יש לך ${data0.weddings.length} חתונות:\n\n${list}\n\n📊 ${dashboardUrl}`);
+    }
+    return;
+  }
+
+  // ── Use Gemini only for parsing actual wedding invitations ──────────
+  let result;
+  try {
+    result = await askGemini(
+      `אתה עוזר למעקב חתונות. קבל הודעה ובדוק אם זו הזמנה לחתונה.
+החזר JSON בלבד:
+{"isWedding":true/false,"names":"שמות הזוג או null","date":"YYYY-MM-DD או null","location":"מיקום או null","reply":"תגובה קצרה בעברית"}`,
+      text
+    );
+  } catch {
+    await sendMessage(from, `היי! אני כאן לעזור 😊\nשלח לי הזמנה לחתונה ואוסיף ללוח השנה.\n\nהאתר שלך: ${dashboardUrl}`);
+    return;
+  }
+
+  if (!result.isWedding) {
+    await sendMessage(from, result.reply || `היי! שלח לי הזמנה לחתונה ואוסיף ללוח השנה 📅`);
     return;
   }
 
