@@ -126,22 +126,44 @@ async function handleMessage(from, text) {
   }
 
   // ── Idle — parse incoming message ──
+  const data0 = await loadData();
+  const weddingSummary = data0.weddings.length
+    ? data0.weddings.map(w => `- ${w.names} | ${w.date || 'תאריך לא ידוע'} | ${w.location || ''} | צ'ק: ${w.giftAmount ? w.giftAmount + ' ₪' : 'לא הוגדר'}`).join('\n')
+    : 'אין חתונות שמורות עדיין.';
+
   let result;
   try {
     result = await askGemini(
-      `אתה עוזר חכם למעקב חתונות. נתח את ההודעה.
-החזר JSON בלבד:
+      `אתה עוזר חכם למעקב חתונות בעברית. שמך הוא "חתניה".
+
+חתונות שמורות כרגע:
+${weddingSummary}
+
+נתח את ההודעה והחזר JSON בלבד (ללא markdown):
 {
   "isWedding": true/false,
+  "isQuestion": true/false,
   "names": "שמות הזוג או null",
   "date": "YYYY-MM-DD או null",
   "location": "מיקום או null",
-  "reply": "תגובה ידידותית בעברית"
-}`,
+  "reply": "תגובה ידידותית וקצרה בעברית"
+}
+
+חוקים:
+- אם זו הזמנה לחתונה → isWedding: true, חלץ פרטים
+- אם שואלים על חתונות קיימות → isQuestion: true, ענה על בסיס הרשימה
+- אחרת → ענה ידידותית`,
       text
     );
   } catch {
     await sendMessage(from, 'שלח לי הזמנה לחתונה ואני אוסיף אותה ללוח השנה 📅');
+    return;
+  }
+
+  if (result.isQuestion || (!result.isWedding && !result.isQuestion)) {
+    const dashboardUrl = APP_URL || `http://localhost:${PORT}`;
+    const reply = result.reply || 'שלח לי הזמנה לחתונה ואוסיף אותה ללוח השנה 📅';
+    await sendMessage(from, reply + (result.isQuestion ? `\n\n📊 ${dashboardUrl}` : ''));
     return;
   }
 

@@ -2,14 +2,14 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מעקב חתונות</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
   --primary: #2B1A6B;
@@ -19,605 +19,297 @@
   --bg: #F2F0EC;
   --card: #FFFFFF;
   --text: #1A1A2E;
-  --text-2: #666680;
-  --border: #E8E5DF;
-  --nav-h: 72px;
-  --header-h: 60px;
+  --text-2: #6B6B8A;
+  --border: #E5E3DE;
+  --shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
 
-body {
-  font-family: 'Heebo', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100dvh;
-  overflow-x: hidden;
-  padding-bottom: var(--nav-h);
-}
+body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; }
 
-/* ── Header ── */
+/* ─── Header ─────────────────────────────────────────────────────── */
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--bg);
-  height: var(--header-h);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+  padding: 0 24px;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
 }
+.logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; }
+.logo-box { width: 34px; height: 34px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
 
-.header-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
+/* Desktop nav in header */
+.header-nav { display: flex; gap: 4px; }
+.hn-btn { padding: 7px 16px; border-radius: 8px; border: none; background: none; cursor: pointer; font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 500; color: var(--text-2); transition: all 150ms; }
+.hn-btn:hover { background: var(--bg); color: var(--text); }
+.hn-btn.active { background: var(--primary); color: white; }
 
-.header-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -0.3px;
-}
+/* ─── Layout ─────────────────────────────────────────────────────── */
+.app { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
 
-.header-menu {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  cursor: pointer;
-  border-radius: 10px;
-  background: none;
-  border: none;
-}
+/* Dashboard: left column + right sidebar */
+.dash-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
 
-.header-menu span {
-  display: block;
-  width: 22px;
-  height: 2px;
-  background: var(--text);
-  border-radius: 2px;
-  transition: 150ms ease;
-}
-
-/* ── Page ── */
-.page { display: none; padding: 0 16px 24px; }
-.page.active { display: block; }
-
-/* ── Hero card ── */
+/* ─── Hero ───────────────────────────────────────────────────────── */
 .hero {
-  background: var(--primary);
-  border-radius: 20px;
-  padding: 28px 24px;
-  margin-bottom: 16px;
-  position: relative;
-  overflow: hidden;
+  background: var(--primary); border-radius: 18px; padding: 28px 24px;
+  position: relative; overflow: hidden; margin-bottom: 16px;
 }
+.hero::before { content: ''; position: absolute; top: -50px; left: -50px; width: 180px; height: 180px; background: rgba(255,255,255,0.04); border-radius: 50%; }
+.hero-label { font-size: 13px; color: rgba(255,255,255,0.55); font-weight: 500; margin-bottom: 8px; letter-spacing: .4px; }
+.hero-amount { font-size: 54px; font-weight: 800; color: var(--gold-light); line-height: 1; letter-spacing: -2px; position: relative; z-index: 1; }
+.hero-amount span { font-size: 34px; }
 
-.hero::before {
-  content: '';
-  position: absolute;
-  top: -40px; left: -40px;
-  width: 160px; height: 160px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 50%;
-}
+/* ─── Stat cards ─────────────────────────────────────────────────── */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat { background: var(--card); border-radius: 14px; padding: 18px 14px; text-align: center; box-shadow: var(--shadow); }
+.stat-val { font-size: 34px; font-weight: 800; color: var(--gold); line-height: 1; margin-bottom: 4px; }
+.stat-lbl { font-size: 12px; color: var(--text-2); font-weight: 500; }
 
-.hero::after {
-  content: '';
-  position: absolute;
-  bottom: -30px; right: -20px;
-  width: 120px; height: 120px;
-  background: rgba(255,255,255,0.03);
-  border-radius: 50%;
-}
+/* ─── Card ───────────────────────────────────────────────────────── */
+.card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+.card-hd { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 13px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: .05em; }
+.card-link { font-size: 13px; color: var(--text-2); background: none; border: none; cursor: pointer; font-family: inherit; }
+.card-link:hover { color: var(--primary); }
+.card-body { padding: 16px 20px; }
 
-.hero-label {
-  font-size: 13px;
-  color: rgba(255,255,255,0.6);
-  margin-bottom: 8px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-
-.hero-amount {
-  font-size: 52px;
-  font-weight: 800;
-  color: var(--gold-light);
-  line-height: 1;
-  letter-spacing: -2px;
-  position: relative;
-  z-index: 1;
-}
-
-.hero-amount span { font-size: 32px; }
-
-/* ── Stats row ── */
-.stats-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  background: var(--card);
-  border-radius: 16px;
-  padding: 20px 16px;
-  text-align: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
-
-.stat-card .s-label {
-  font-size: 12px;
-  color: var(--text-2);
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.stat-card .s-value {
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--gold);
-  line-height: 1;
-}
-
-/* ── Section header ── */
-.section-hd {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.section-link {
-  font-size: 13px;
-  color: var(--text-2);
-  cursor: pointer;
-  background: none;
-  border: none;
-  font-family: inherit;
-}
-
-/* ── Calendar card ── */
-.calendar-card {
-  background: var(--card);
-  border-radius: 20px;
-  padding: 16px;
-  margin-bottom: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
-
-.fc {
-  font-family: 'Heebo', sans-serif !important;
-  font-size: 13px;
-}
-
-.fc .fc-toolbar-title {
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  color: var(--text) !important;
-}
-
-.fc .fc-button {
-  background: var(--bg) !important;
-  border: none !important;
-  color: var(--text) !important;
-  border-radius: 10px !important;
-  padding: 6px 10px !important;
-  font-family: 'Heebo', sans-serif !important;
-  box-shadow: none !important;
-}
-
+/* ─── Calendar ───────────────────────────────────────────────────── */
+.fc { font-family: 'Heebo', sans-serif !important; font-size: 13px; }
+.fc .fc-toolbar-title { font-size: 15px !important; font-weight: 700 !important; }
+.fc .fc-button { background: var(--bg) !important; border: none !important; color: var(--text) !important; border-radius: 8px !important; padding: 5px 10px !important; box-shadow: none !important; font-family: 'Heebo', sans-serif !important; }
 .fc .fc-button:hover { background: var(--border) !important; }
-
-.fc .fc-col-header-cell-cushion {
-  color: var(--text-2) !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  text-decoration: none !important;
-}
-
-.fc .fc-daygrid-day-number {
-  color: var(--text) !important;
-  text-decoration: none !important;
-  font-size: 13px !important;
-}
-
-.fc .fc-day-today { background: rgba(201,168,76,0.08) !important; }
+.fc .fc-col-header-cell-cushion { color: var(--text-2) !important; font-size: 11px !important; font-weight: 600 !important; text-decoration: none !important; }
+.fc .fc-daygrid-day-number { color: var(--text) !important; text-decoration: none !important; font-size: 12px !important; }
+.fc .fc-day-today { background: rgba(201,168,76,0.07) !important; }
 .fc .fc-day-today .fc-daygrid-day-number { font-weight: 700 !important; color: var(--gold) !important; }
-.fc .fc-daygrid-event { border-radius: 6px !important; font-size: 11px !important; }
-.fc .fc-event-title { font-weight: 600 !important; }
-.fc th { border: none !important; }
-.fc td { border-color: var(--border) !important; }
+.fc .fc-daygrid-event { border-radius: 5px !important; font-size: 11px !important; }
+.fc td, .fc th { border-color: var(--border) !important; }
 .fc .fc-scrollgrid { border: none !important; }
 .fc .fc-scrollgrid-section > td { border: none !important; }
 
-/* ── Wedding card ── */
-.wedding-card {
-  background: var(--card);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  position: relative;
-}
+/* ─── WhatsApp CTA ───────────────────────────────────────────────── */
+.whatsapp-cta { background: var(--primary); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+.cta-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+.cta-desc { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.55; margin-bottom: 14px; }
+.cta-num { font-size: 20px; font-weight: 800; color: var(--gold-light); direction: ltr; display: block; margin-bottom: 2px; }
+.cta-sub { font-size: 11px; color: rgba(255,255,255,0.35); }
 
-.w-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
-  border: 1.5px solid var(--border);
-}
-
+/* ─── Wedding item ───────────────────────────────────────────────── */
+.w-item { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.w-item:last-child { border-bottom: none; }
+.w-avatar { width: 44px; height: 44px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
 .w-info { flex: 1; min-width: 0; }
+.w-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+.w-date { font-size: 12px; color: var(--text-2); }
+.w-badge { font-size: 12px; font-weight: 700; padding: 5px 11px; border-radius: 100px; white-space: nowrap; flex-shrink: 0; }
+.w-badge-money { background: var(--primary); color: var(--gold-light); }
+.w-badge-pending { background: #FFF8E7; color: #B8870B; }
+.w-del { width: 28px; height: 28px; flex-shrink: 0; background: none; border: none; cursor: pointer; color: #ccc; border-radius: 6px; font-size: 13px; transition: all 150ms; }
+.w-del:hover { background: #fee2e2; color: #ef4444; }
 
-.w-names {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 4px;
-}
-
-.w-date {
-  font-size: 12px;
-  color: var(--text-2);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.w-badge {
-  background: var(--primary);
-  color: var(--gold-light);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 100px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.w-badge.pending {
-  background: #FFF8E7;
-  color: #B8860B;
-}
-
-.w-delete {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  color: #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 150ms;
-}
-
-.w-delete:hover { background: #fee2e2; color: #ef4444; }
-
-/* ── Empty state ── */
-.empty {
-  text-align: center;
-  padding: 48px 24px;
-  background: var(--card);
-  border-radius: 20px;
-}
-
-.empty-icon { font-size: 40px; margin-bottom: 12px; }
-.empty-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+/* ─── Empty ──────────────────────────────────────────────────────── */
+.empty { text-align: center; padding: 40px 20px; }
+.empty-icon { font-size: 36px; margin-bottom: 10px; }
+.empty-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
 .empty-desc { font-size: 13px; color: var(--text-2); line-height: 1.6; }
 
-/* ── FAB ── */
-.fab {
-  position: fixed;
-  bottom: calc(var(--nav-h) + 16px);
-  left: 20px;
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: var(--primary);
-  color: white;
-  font-size: 24px;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(43,26,107,0.35);
-  transition: transform 150ms ease;
-  z-index: 50;
+/* ─── Pages (non-dashboard) ──────────────────────────────────────── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ─── Mobile only ────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .header-nav { display: none; }
+  body { padding-bottom: 70px; }
+  .app { padding: 16px; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(3, 1fr); }
+  .hero-amount { font-size: 44px; }
+
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 70px;
+    background: var(--card); border-top: 1px solid var(--border);
+    display: flex; align-items: stretch; z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bn-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    background: none; border: none; cursor: pointer; color: var(--text-2);
+    font-family: 'Heebo', sans-serif; font-size: 11px; font-weight: 500; padding-top: 6px;
+  }
+  .bn-btn.active { color: var(--primary); }
+  .bn-btn span { font-size: 20px; }
 }
 
-.fab:active { transform: scale(0.95); }
-
-/* ── Bottom nav ── */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0; right: 0;
-  height: var(--nav-h);
-  background: var(--card);
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: stretch;
-  z-index: 100;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.nav-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-2);
-  font-family: 'Heebo', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  padding-top: 8px;
-  transition: color 150ms;
-}
-
-.nav-btn.active { color: var(--primary); }
-.nav-btn .nav-icon { font-size: 22px; }
-.nav-btn .nav-icon.active-icon {
-  background: var(--primary);
-  color: white;
-  width: 36px;
-  height: 28px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
+@media (min-width: 768px) {
+  .bottom-nav { display: none; }
 }
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <div class="header">
-  <div class="header-avatar">💍</div>
-  <div class="header-title">מעקב חתונות</div>
-  <button class="header-menu" aria-label="תפריט">
-    <span></span><span></span><span></span>
-  </button>
+  <div class="logo">
+    <div class="logo-box">💍</div>
+    מעקב חתונות
+  </div>
+  <div class="header-nav">
+    <button class="hn-btn active" onclick="showPage('dash')">📊 דשבורד</button>
+    <button class="hn-btn" onclick="showPage('weddings')">💒 חתונות</button>
+    <button class="hn-btn" onclick="showPage('budget')">💰 תקציב</button>
+  </div>
+  <div style="font-size:12px;color:var(--text-2)" id="lastUpdate"></div>
 </div>
 
-<!-- Dashboard Page -->
-<div class="page active" id="page-dashboard">
-  <!-- Hero -->
-  <div class="hero">
-    <div class="hero-label">סה"כ תקציב</div>
-    <div class="hero-amount" id="heroAmount"><span>₪</span>0</div>
-  </div>
+<div class="app">
 
-  <!-- Stats -->
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="s-label">סה"כ חתונות</div>
-      <div class="s-value" id="statTotal">0</div>
+  <!-- Dashboard -->
+  <div id="dash" class="page active">
+    <div class="dash-grid">
+      <div>
+        <div class="hero">
+          <div class="hero-label">סה"כ תקציב</div>
+          <div class="hero-amount" id="heroAmt"><span>₪</span>0</div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="stat-val" id="s1">0</div><div class="stat-lbl">חתונות</div></div>
+          <div class="stat"><div class="stat-val" id="s2">0</div><div class="stat-lbl">קרובות</div></div>
+          <div class="stat"><div class="stat-val" id="s3">₪0</div><div class="stat-lbl">ממוצע</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><span class="card-title">לוח שנה</span></div>
+          <div class="card-body"><div id="cal"></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="whatsapp-cta">
+          <div class="cta-title">שלח הזמנה לבוט</div>
+          <div class="cta-desc">העבר הזמנת חתונה לבוט — הוא ינתח ויוסיף ללוח.</div>
+          <span class="cta-num">+1 (662) 344-5081</span>
+          <span class="cta-sub">WhatsApp Business</span>
+        </div>
+        <div class="card">
+          <div class="card-hd">
+            <span class="card-title">חתונות אחרונות</span>
+            <button class="card-link" onclick="showPage('weddings')">הכל</button>
+          </div>
+          <div class="card-body" id="preview"></div>
+        </div>
+      </div>
     </div>
-    <div class="stat-card">
-      <div class="s-label">חתונות קרובות</div>
-      <div class="s-value" id="statUpcoming">0</div>
+  </div>
+
+  <!-- Weddings -->
+  <div id="weddings" class="page">
+    <div class="card" style="margin-top:4px">
+      <div class="card-hd">
+        <span class="card-title">כל החתונות</span>
+        <span id="wCount" style="font-size:12px;color:var(--text-2)"></span>
+      </div>
+      <div class="card-body" id="wList"></div>
     </div>
   </div>
 
-  <!-- Calendar -->
-  <div class="section-hd">
-    <div class="section-title">לוח שנה</div>
-  </div>
-  <div class="calendar-card">
-    <div id="calendar"></div>
+  <!-- Budget -->
+  <div id="budget" class="page">
+    <div class="hero" style="margin-bottom:16px;margin-top:4px">
+      <div class="hero-label">סה"כ הוצאות</div>
+      <div class="hero-amount" id="budgetAmt"><span>₪</span>0</div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">פירוט</span></div>
+      <div class="card-body" id="budgetList"></div>
+    </div>
   </div>
 
-  <!-- Wedding list preview -->
-  <div class="section-hd">
-    <div class="section-title">רשימת חתונות</div>
-    <button class="section-link" onclick="switchPage('page-weddings')">צפה בהכל</button>
-  </div>
-  <div id="previewList"></div>
 </div>
 
-<!-- Weddings Page -->
-<div class="page" id="page-weddings">
-  <div class="section-hd" style="margin-top:8px">
-    <div class="section-title">כל החתונות</div>
-    <span id="weddingCount" style="font-size:13px;color:var(--text-2)"></span>
-  </div>
-  <div id="weddingList"></div>
-</div>
-
-<!-- Calendar Page -->
-<div class="page" id="page-calendar">
-  <div class="calendar-card" style="margin-top:8px">
-    <div id="calendar2"></div>
-  </div>
-</div>
-
-<!-- Budget Page -->
-<div class="page" id="page-budget">
-  <div class="hero" style="margin-top:8px">
-    <div class="hero-label">סה"כ הוצאות</div>
-    <div class="hero-amount" id="budgetTotal"><span>₪</span>0</div>
-  </div>
-  <div id="budgetList"></div>
-</div>
-
-<!-- FAB -->
-<button class="fab" onclick="switchPage('page-weddings')" title="חתונות">+</button>
-
-<!-- Bottom Nav -->
+<!-- Mobile bottom nav -->
 <nav class="bottom-nav">
-  <button class="nav-btn" onclick="switchPage('page-budget')">
-    <div class="nav-icon">💰</div>
-    <span>Budget</span>
-  </button>
-  <button class="nav-btn" onclick="switchPage('page-calendar')">
-    <div class="nav-icon">📅</div>
-    <span>Calendar</span>
-  </button>
-  <button class="nav-btn" onclick="switchPage('page-weddings')">
-    <div class="nav-icon">💒</div>
-    <span>Weddings</span>
-  </button>
-  <button class="nav-btn active" onclick="switchPage('page-dashboard')" id="nav-dashboard">
-    <div class="nav-icon active-icon">⊞</div>
-    <span>Dashboard</span>
-  </button>
+  <button class="bn-btn active" id="mn-dash" onclick="showPage('dash')"><span>📊</span>דשבורד</button>
+  <button class="bn-btn" id="mn-weddings" onclick="showPage('weddings')"><span>💒</span>חתונות</button>
+  <button class="bn-btn" id="mn-budget" onclick="showPage('budget')"><span>💰</span>תקציב</button>
 </nav>
 
 <script>
 let weddings = [];
-let activePageId = 'page-dashboard';
 
-function switchPage(pageId) {
+function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const map = { 'page-dashboard': 3, 'page-weddings': 2, 'page-calendar': 1, 'page-budget': 0 };
-  const btns = document.querySelectorAll('.nav-btn');
-  const idx = map[pageId];
-  if (idx !== undefined) btns[idx].classList.add('active');
-  activePageId = pageId;
-  if (pageId === 'page-calendar' && !window._cal2) renderCal2();
-  window.scrollTo(0, 0);
+  document.getElementById(id).classList.add('active');
+  // Desktop nav
+  document.querySelectorAll('.hn-btn').forEach((b,i) => b.classList.toggle('active', ['dash','weddings','budget'][i] === id));
+  // Mobile nav
+  ['dash','weddings','budget'].forEach(p => document.getElementById('mn-'+p)?.classList.toggle('active', p===id));
+  window.scrollTo(0,0);
 }
 
-function fmtDate(d) {
-  if (!d) return 'תאריך לא ידוע';
-  return new Date(d).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
-}
+const fmtDate = d => d ? new Date(d).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}) : 'תאריך לא ידוע';
+const fmtMoney = n => n ? '₪' + n.toLocaleString('he-IL') : null;
 
-function weddingCardHTML(w, showDelete = true) {
+function wHTML(w, del=true) {
   const badge = w.giftAmount
-    ? `<div class="w-badge">₪${w.giftAmount.toLocaleString('he-IL')}</div>`
-    : `<div class="w-badge pending">ממתין</div>`;
-  const del = showDelete ? `<button class="w-delete" onclick="del('${w.id}')">✕</button>` : '';
-  return `<div class="wedding-card">
-    ${del}
-    <div class="w-icon">💒</div>
+    ? `<span class="w-badge w-badge-money">${fmtMoney(w.giftAmount)}</span>`
+    : `<span class="w-badge w-badge-pending">ממתין</span>`;
+  const delBtn = del ? `<button class="w-del" onclick="remove('${w.id}')">✕</button>` : '';
+  return `<div class="w-item">
+    <div class="w-avatar">💒</div>
     <div class="w-info">
-      <div class="w-names">${w.names}</div>
-      <div class="w-date">📅 ${fmtDate(w.date)}${w.location ? ' · 📍 ' + w.location : ''}</div>
+      <div class="w-name">${w.names}</div>
+      <div class="w-date">📅 ${fmtDate(w.date)}${w.location?' · 📍'+w.location:''}</div>
     </div>
-    ${badge}
+    ${badge}${delBtn}
   </div>`;
 }
 
 function render() {
   const now = new Date();
-  const total = weddings.reduce((s, w) => s + (w.giftAmount || 0), 0);
-  const upcoming = weddings.filter(w => w.date && new Date(w.date) >= now).length;
-  const sorted = [...weddings].sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1);
+  const sorted = [...weddings].sort((a,b)=>(a.date||'')<(b.date||'')?-1:1);
+  const total = weddings.reduce((s,w)=>s+(w.giftAmount||0),0);
+  const upcoming = weddings.filter(w=>w.date&&new Date(w.date)>=now).length;
+  const withGift = weddings.filter(w=>w.giftAmount);
+  const avg = withGift.length ? Math.round(total/withGift.length) : 0;
 
-  // Stats
-  document.getElementById('heroAmount').innerHTML = `<span>₪</span>${total.toLocaleString('he-IL')}`;
-  document.getElementById('statTotal').textContent = weddings.length;
-  document.getElementById('statUpcoming').textContent = upcoming;
-  document.getElementById('budgetTotal').innerHTML = `<span>₪</span>${total.toLocaleString('he-IL')}`;
-  document.getElementById('weddingCount').textContent = weddings.length + ' חתונות';
+  document.getElementById('heroAmt').innerHTML = `<span>₪</span>${total.toLocaleString('he-IL')}`;
+  document.getElementById('budgetAmt').innerHTML = `<span>₪</span>${total.toLocaleString('he-IL')}`;
+  document.getElementById('s1').textContent = weddings.length;
+  document.getElementById('s2').textContent = upcoming;
+  document.getElementById('s3').textContent = avg ? '₪'+avg.toLocaleString('he-IL') : '₪0';
+  document.getElementById('wCount').textContent = weddings.length + ' חתונות';
+  document.getElementById('lastUpdate').textContent = 'עדכון ' + new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
 
-  // Preview (first 3)
-  const preview = document.getElementById('previewList');
-  const first3 = sorted.slice(0, 3);
-  preview.innerHTML = first3.length
-    ? first3.map(w => weddingCardHTML(w, false)).join('')
-    : `<div class="empty"><div class="empty-icon">💌</div><div class="empty-title">אין חתונות עדיין</div><div class="empty-desc">שלח הזמנה לבוט ויופיע כאן</div></div>`;
+  const emptyHTML = `<div class="empty"><div class="empty-icon">💌</div><div class="empty-title">אין חתונות</div><div class="empty-desc">שלח הזמנה לבוט</div></div>`;
 
-  // Full list
-  const list = document.getElementById('weddingList');
-  list.innerHTML = sorted.length
-    ? sorted.map(w => weddingCardHTML(w)).join('')
-    : `<div class="empty"><div class="empty-icon">💌</div><div class="empty-title">אין חתונות עדיין</div><div class="empty-desc">שלח הזמנה לבוט ויופיע כאן</div></div>`;
-
-  // Budget list
-  document.getElementById('budgetList').innerHTML = sorted.filter(w => w.giftAmount)
-    .map(w => `<div class="wedding-card">
-      <div class="w-icon">💰</div>
-      <div class="w-info">
-        <div class="w-names">${w.names}</div>
-        <div class="w-date">📅 ${fmtDate(w.date)}</div>
-      </div>
-      <div class="w-badge">₪${w.giftAmount.toLocaleString('he-IL')}</div>
-    </div>`).join('') || `<div class="empty"><div class="empty-icon">💸</div><div class="empty-title">אין נתוני תקציב</div></div>`;
-
-  // Calendar
-  const events = weddings.filter(w => w.date).map(w => ({
-    id: w.id, title: w.names, date: w.date,
-    backgroundColor: '#2B1A6B', borderColor: '#2B1A6B', textColor: '#F0D080'
-  }));
+  document.getElementById('preview').innerHTML = sorted.length ? sorted.slice(0,4).map(w=>wHTML(w,false)).join('') : emptyHTML;
+  document.getElementById('wList').innerHTML = sorted.length ? sorted.map(w=>wHTML(w)).join('') : emptyHTML;
+  document.getElementById('budgetList').innerHTML = withGift.length
+    ? sorted.filter(w=>w.giftAmount).map(w=>`<div class="w-item">
+        <div class="w-avatar">💰</div>
+        <div class="w-info"><div class="w-name">${w.names}</div><div class="w-date">${fmtDate(w.date)}</div></div>
+        <span class="w-badge w-badge-money">${fmtMoney(w.giftAmount)}</span>
+      </div>`).join('')
+    : emptyHTML;
 
   if (window._cal) window._cal.destroy();
-  window._cal = new FullCalendar.Calendar(document.getElementById('calendar'), {
-    initialView: 'dayGridMonth', locale: 'he', direction: 'rtl', height: 320,
+  window._cal = new FullCalendar.Calendar(document.getElementById('cal'), {
+    initialView: 'dayGridMonth', locale: 'he', direction: 'rtl', height: 340,
     headerToolbar: { start: 'prev,next', center: 'title', end: '' },
-    events,
-    eventClick: info => {
-      const w = weddings.find(x => x.id === info.event.id);
-      if (w) alert(`💒 ${w.names}\n📅 ${fmtDate(w.date)}${w.location ? '\n📍 ' + w.location : ''}\n💰 ${w.giftAmount ? '₪' + w.giftAmount : 'לא הוגדר'}`);
+    events: weddings.filter(w=>w.date).map(w=>({
+      id:w.id, title:w.names, date:w.date,
+      backgroundColor:'#2B1A6B', borderColor:'#2B1A6B', textColor:'#F0D080'
+    })),
+    eventClick: i => {
+      const w = weddings.find(x=>x.id===i.event.id);
+      if(w) alert(`💒 ${w.names}\n📅 ${fmtDate(w.date)}${w.location?'\n📍'+w.location:''}\n💰 ${w.giftAmount?fmtMoney(w.giftAmount):'לא הוגדר'}`);
     }
   });
   window._cal.render();
 }
 
-function renderCal2() {
-  const events = weddings.filter(w => w.date).map(w => ({
-    id: w.id, title: w.names, date: w.date,
-    backgroundColor: '#2B1A6B', borderColor: '#2B1A6B', textColor: '#F0D080'
-  }));
-  window._cal2 = new FullCalendar.Calendar(document.getElementById('calendar2'), {
-    initialView: 'dayGridMonth', locale: 'he', direction: 'rtl', height: 'auto',
-    headerToolbar: { start: 'prev,next', center: 'title', end: '' },
-    events
-  });
-  window._cal2.render();
-}
-
-async function del(id) {
+async function remove(id) {
   if (!confirm('למחוק?')) return;
-  await fetch(`/api/weddings/${id}`, { method: 'DELETE' });
+  await fetch(`/api/weddings/${id}`,{method:'DELETE'});
   load();
 }
 
@@ -626,7 +318,7 @@ async function load() {
     const res = await fetch('/api/weddings');
     weddings = await res.json();
     render();
-  } catch(e) { console.error(e); }
+  } catch(e){console.error(e);}
 }
 
 load();
