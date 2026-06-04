@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מעקב חתונות 💍</title>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f4ff; color: #2d2d2d; }
+
+  header {
+    background: linear-gradient(135deg, #7c3aed, #db2777);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  header h1 { font-size: 1.6rem; }
+  header span { font-size: 2rem; }
+
+  .stats {
+    display: flex;
+    gap: 16px;
+    padding: 20px 30px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 24px;
+    flex: 1;
+    min-width: 140px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .stat-card .num { font-size: 2rem; font-weight: 700; color: #7c3aed; }
+  .stat-card .label { font-size: 0.85rem; color: #888; margin-top: 4px; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    padding: 0 30px 30px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .card h2 { font-size: 1.1rem; margin-bottom: 16px; color: #7c3aed; }
+
+  #calendar { font-size: 0.9rem; }
+
+  .wedding-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .wedding-item:last-child { border-bottom: none; }
+  .wedding-emoji { font-size: 1.8rem; flex-shrink: 0; }
+  .wedding-info { flex: 1; }
+  .wedding-names { font-weight: 600; font-size: 0.95rem; }
+  .wedding-date { font-size: 0.8rem; color: #888; margin-top: 2px; }
+  .gift-badge {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .gift-badge.empty {
+    background: #fef9c3;
+    color: #a16207;
+    border-color: #fef08a;
+  }
+  .delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 1rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .delete-btn:hover { color: #ef4444; background: #fff1f2; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #aaa;
+  }
+  .empty-state .big { font-size: 2.5rem; margin-bottom: 8px; }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; padding: 0 16px 24px; }
+    .stats { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span>💍</span>
+  <h1>מעקב חתונות</h1>
+</header>
+
+<div class="stats">
+  <div class="stat-card"><div class="num" id="totalCount">0</div><div class="label">חתונות</div></div>
+  <div class="stat-card"><div class="num" id="totalGift">0 ₪</div><div class="label">סה"כ צ׳קים</div></div>
+  <div class="stat-card"><div class="num" id="upcoming">0</div><div class="label">קרובות</div></div>
+</div>
+
+<div class="layout">
+  <div class="card">
+    <h2>📅 לוח שנה</h2>
+    <div id="calendar"></div>
+  </div>
+
+  <div class="card">
+    <h2>🎊 כל החתונות</h2>
+    <div id="weddingList"></div>
+  </div>
+</div>
+
+<script>
+let weddings = [];
+
+async function load() {
+  const res = await fetch('/api/weddings');
+  weddings = await res.json();
+  render();
+}
+
+function render() {
+  // Stats
+  const total = weddings.reduce((s, w) => s + (w.giftAmount || 0), 0);
+  const upcoming = weddings.filter(w => w.date && new Date(w.date) >= new Date()).length;
+  document.getElementById('totalCount').textContent = weddings.length;
+  document.getElementById('totalGift').textContent = total.toLocaleString('he-IL') + ' ₪';
+  document.getElementById('upcoming').textContent = upcoming;
+
+  // List
+  const list = document.getElementById('weddingList');
+  if (!weddings.length) {
+    list.innerHTML = '<div class="empty-state"><div class="big">💌</div>שלח הזמנה לבוט ויופיע כאן</div>';
+  } else {
+    const sorted = [...weddings].sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1);
+    list.innerHTML = sorted.map(w => {
+      const dateStr = w.date ? new Date(w.date).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'תאריך לא ידוע';
+      const gift = w.giftAmount
+        ? `<span class="gift-badge">💰 ${w.giftAmount.toLocaleString('he-IL')} ₪</span>`
+        : `<span class="gift-badge empty">צ׳ק לא הוגדר</span>`;
+      return `
+        <div class="wedding-item">
+          <div class="wedding-emoji">💒</div>
+          <div class="wedding-info">
+            <div class="wedding-names">${w.names}</div>
+            <div class="wedding-date">${dateStr}</div>
+          </div>
+          ${gift}
+          <button class="delete-btn" onclick="deleteWedding('${w.id}')" title="מחק">✕</button>
+        </div>`;
+    }).join('');
+  }
+
+  // Calendar
+  if (window._calendar) window._calendar.destroy();
+  const calEl = document.getElementById('calendar');
+  window._calendar = new FullCalendar.Calendar(calEl, {
+    initialView: 'dayGridMonth',
+    locale: 'he',
+    direction: 'rtl',
+    height: 500,
+    events: weddings.filter(w => w.date).map(w => ({
+      id: w.id,
+      title: '💒 ' + w.names,
+      date: w.date,
+      backgroundColor: '#7c3aed',
+      borderColor: '#7c3aed',
+    })),
+    eventClick: (info) => {
+      const w = weddings.find(x => x.id === info.event.id);
+      if (w) alert(`💒 ${w.names}\n📅 ${info.event.startStr}\n💰 ${w.giftAmount ? w.giftAmount + ' ₪' : 'לא הוגדר'}`);
+    }
+  });
+  window._calendar.render();
+}
+
+async function deleteWedding(id) {
+  if (!confirm('למחוק חתונה זו?')) return;
+  await fetch(`/api/weddings/${id}`, { method: 'DELETE' });
+  load();
+}
+
+load();
+setInterval(load, 10000); // refresh every 10s
+</script>
+</body>
+</html>
