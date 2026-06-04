@@ -10,11 +10,19 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const { WHATSAPP_TOKEN, PHONE_NUMBER_ID, VERIFY_TOKEN, GEMINI_KEY, PORT = 3000 } = process.env;
-const DATA_FILE = path.join(__dirname, "data/weddings.json");
+// Vercel serverless uses /tmp for writable storage
+const DATA_FILE = process.env.VERCEL
+  ? "/tmp/weddings.json"
+  : path.join(__dirname, "data/weddings.json");
 
 // ─── Data helpers ─────────────────────────────────────────────────────────────
 function loadData() {
-  return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+  if (!fs.existsSync(DATA_FILE)) return { weddings: [] };
+  try {
+    return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+  } catch {
+    return { weddings: [] };
+  }
 }
 function saveData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
