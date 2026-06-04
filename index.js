@@ -193,16 +193,19 @@ app.post("/webhook", async (req, res) => {
 });
 
 // ─── Dashboard API ────────────────────────────────────────────────────────────
-app.get("/api/weddings", (req, res) => res.json(await loadData().weddings));
+app.get("/api/weddings", async (req, res) => {
+  const data = await loadData();
+  res.json(data.weddings);
+});
 
-app.delete("/api/weddings/:id", (req, res) => {
+app.delete("/api/weddings/:id", async (req, res) => {
   const data = await loadData();
   data.weddings = data.weddings.filter(w => w.id !== req.params.id);
   await saveData(data);
   res.json({ ok: true });
 });
 
-app.put("/api/weddings/:id", (req, res) => {
+app.put("/api/weddings/:id", async (req, res) => {
   const data = await loadData();
   const w = data.weddings.find(w => w.id === req.params.id);
   if (w) Object.assign(w, req.body);
