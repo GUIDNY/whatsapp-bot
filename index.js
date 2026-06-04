@@ -154,6 +154,11 @@ async function handleMessage(from, text) {
   );
 }
 
+// ─── Debug (temp) ─────────────────────────────────────────────────────────────
+app.get("/debug", (req, res) => {
+  res.json({ verify_token_set: !!VERIFY_TOKEN, phone_id_set: !!PHONE_NUMBER_ID });
+});
+
 // ─── Webhook ──────────────────────────────────────────────────────────────────
 app.get("/webhook", (req, res) => {
   if (req.query["hub.mode"] === "subscribe" && req.query["hub.verify_token"] === VERIFY_TOKEN) {
