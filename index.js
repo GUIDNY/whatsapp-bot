@@ -214,10 +214,89 @@ app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
   const entry = req.body.entry?.[0]?.changes?.[0]?.value;
   const message = entry?.messages?.[0];
-  if (!message || message.type !== "text") return;
-  console.log(`📩 מ-${message.from}: ${message.text.body}`);
-  await handleMessage(message.from, message.text.body);
+  if (!message) return;
+
+  if (message.type === "text") {
+    console.log(`📩 מ-${message.from}: ${message.text.body}`);
+    await handleMessage(message.from, message.text.body);
+
+  } else if (message.type === "image") {
+    console.log(`🖼 תמונה מ-${message.from}`);
+    await handleImage(message.from, message.image.id);
+  }
 });
+
+async function handleImage(from, mediaId) {
+  try {
+    // 1. Get media URL from WhatsApp
+    const mediaRes = await axios.get(
+      `https://graph.facebook.com/v25.0/${mediaId}`,
+      { headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` } }
+    );
+    const mediaUrl = mediaRes.data.url;
+
+    // 2. Download image as base64
+    const imgRes = await axios.get(mediaUrl, {
+      responseType: "arraybuffer",
+      headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` }
+    });
+    const base64 = Buffer.from(imgRes.data).toString("base64");
+    const mimeType = imgRes.headers["content-type"] || "image/jpeg";
+
+    // 3. Send to Gemini Vision
+    const gemRes = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+      {
+        contents: [{
+          parts: [
+            { text: `זוהי הזמנה לחתונה. חלץ את הפרטים והחזר JSON בלבד:
+{"isWedding":true/false,"names":"שמות הזוג","date":"YYYY-MM-DD","location":"מיקום"}` },
+            { inline_data: { mime_type: mimeType, data: base64 } }
+          ]
+        }],
+        generationConfig: { responseMimeType: "application/json" }
+      },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    const raw = gemRes.data.candidates[0].content.parts[0].text;
+    const result = JSON.parse(raw.replace(/```json\n?|\n?```/g, "").trim());
+
+    if (!result.isWedding) {
+      await sendMessage(from, "לא זיהיתי הזמנה לחתונה בתמונה 🤔\nאפשר לשלוח כטקסט?");
+      return;
+    }
+
+    // Same flow as text message
+    const data = await loadData();
+    const wedding = {
+      id: require("crypto").randomUUID(),
+      names: result.names || "לא ידוע",
+      date: result.date || null,
+      location: result.location || null,
+      giftAmount: null,
+      rawMessage: "[תמונה]",
+      createdAt: new Date().toISOString(),
+    };
+    data.weddings.push(wedding);
+    await saveData(data);
+
+    userStates[from] = { step: "waiting_gift", weddingId: wedding.id };
+
+    const dateStr = wedding.date
+      ? new Date(wedding.date).toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" })
+      : "תאריך לא נמצא";
+
+    const dashboardUrl = APP_URL || `http://localhost:${PORT}`;
+    await sendMessage(from,
+      `📸 קראתי את ההזמנה!\n\n💒 ${wedding.names}\n📅 ${dateStr}${wedding.location ? "\n📍 " + wedding.location : ""}\n\nכמה אתה שם בצ'ק? 💰`
+    );
+
+  } catch (err) {
+    console.error("Image error:", err.message);
+    await sendMessage(from, "לא הצלחתי לקרוא את התמונה 😅\nנסה לשלוח את ההזמנה כטקסט.");
+  }
+}
 
 // ─── Dashboard API ────────────────────────────────────────────────────────────
 app.get("/api/weddings", async (req, res) => {
