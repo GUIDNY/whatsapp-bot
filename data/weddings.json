@@ -17,6 +17,15 @@
       "giftAmount": 100,
       "rawMessage": "חתונה שבוע הבא יום רביעי יותם ואור",
       "createdAt": "2026-06-04T14:42:25.365Z"
+    },
+    {
+      "id": "b8acb996-fd6c-4524-9ddd-6b78ea0d92b9",
+      "names": "Karin & Ben",
+      "date": "2026-06-24",
+      "location": "עידן על המים, קיבוץ ניר אליהו",
+      "giftAmount": null,
+      "rawMessage": "[תמונה]",
+      "createdAt": "2026-06-04T15:46:56.485Z"
     }
   ]
 }
