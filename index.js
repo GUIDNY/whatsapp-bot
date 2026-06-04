@@ -9,23 +9,42 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-const { WHATSAPP_TOKEN, PHONE_NUMBER_ID, VERIFY_TOKEN, GEMINI_KEY, PORT = 3000 } = process.env;
-// Vercel serverless uses /tmp for writable storage
-const DATA_FILE = process.env.VERCEL
-  ? "/tmp/weddings.json"
-  : path.join(__dirname, "data/weddings.json");
+const { WHATSAPP_TOKEN, PHONE_NUMBER_ID, VERIFY_TOKEN, GEMINI_KEY, GITHUB_TOKEN, APP_URL, PORT = 3000 } = process.env;
+const DATA_FILE = path.join(__dirname, "data/weddings.json");
+const GITHUB_REPO = "GUIDNY/whatsapp-bot";
+const GITHUB_FILE = "data/weddings.json";
 
-// ─── Data helpers ─────────────────────────────────────────────────────────────
-function loadData() {
-  if (!fs.existsSync(DATA_FILE)) return { weddings: [] };
-  try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-  } catch {
-    return { weddings: [] };
+// ─── Data helpers (GitHub as persistent storage) ───────────────────────────────
+async function loadData() {
+  if (GITHUB_TOKEN) {
+    try {
+      const res = await axios.get(
+        `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`,
+        { headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: "application/vnd.github.v3+json" } }
+      );
+      return JSON.parse(Buffer.from(res.data.content, "base64").toString("utf8"));
+    } catch {}
   }
+  if (!fs.existsSync(DATA_FILE)) return { weddings: [] };
+  try { return JSON.parse(fs.readFileSync(DATA_FILE, "utf8")); } catch { return { weddings: [] }; }
 }
-function saveData(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+
+async function saveData(data) {
+  const json = JSON.stringify(data, null, 2);
+  try { fs.writeFileSync(DATA_FILE, json); } catch {}
+  if (GITHUB_TOKEN) {
+    try {
+      const fileRes = await axios.get(
+        `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`,
+        { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
+      );
+      await axios.put(
+        `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`,
+        { message: "update weddings", content: Buffer.from(json).toString("base64"), sha: fileRes.data.sha },
+        { headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: "application/vnd.github.v3+json" } }
+      );
+    } catch (e) { console.error("GitHub save error:", e.message); }
+  }
 }
 
 // ─── Conversation state per user ──────────────────────────────────────────────
@@ -78,26 +97,27 @@ async function handleMessage(from, text) {
     }
 
     if (result.isCorrection) {
-      const data = loadData();
+      const data = await loadData();
       const wedding = data.weddings.find(w => w.id === state.weddingId);
       if (wedding) {
         if (result.correctedDate) wedding.date = result.correctedDate;
         if (result.correctedNames) wedding.names = result.correctedNames;
-        saveData(data);
+        await saveData(data);
       }
       await sendMessage(from, `✅ עדכנתי! ${result.reply}\n\nאז כמה אתה שם בצ'ק? 💰`);
       return;
     }
 
     if (result.isAmount && result.amount) {
-      const data = loadData();
+      const data = await loadData();
       const wedding = data.weddings.find(w => w.id === state.weddingId);
       if (wedding) {
         wedding.giftAmount = result.amount;
-        saveData(data);
+        await saveData(data);
       }
       userStates[from] = { step: "idle" };
-      await sendMessage(from, `✅ שמרתי! ${result.amount.toLocaleString()} ₪ לחתונת ${wedding?.names || ""}. 🎊\n\nלוח השנה מעודכן! http://localhost:${PORT}`);
+      const dashboardUrl = APP_URL || `http://localhost:${PORT}`;
+      await sendMessage(from, `✅ שמרתי! ${result.amount.toLocaleString()} ₪ לחתונת ${wedding?.names || ""}. 🎊\n\nלוח השנה מעודכן! ${dashboardUrl}`);
       return;
     }
 
@@ -130,7 +150,7 @@ async function handleMessage(from, text) {
     return;
   }
 
-  const data = loadData();
+  const data = await loadData();
   const wedding = {
     id: uuidv4(),
     names: result.names || "לא ידוע",
@@ -141,7 +161,7 @@ async function handleMessage(from, text) {
     createdAt: new Date().toISOString(),
   };
   data.weddings.push(wedding);
-  saveData(data);
+  await saveData(data);
 
   userStates[from] = { step: "waiting_gift", weddingId: wedding.id };
 
@@ -173,20 +193,20 @@ app.post("/webhook", async (req, res) => {
 });
 
 // ─── Dashboard API ────────────────────────────────────────────────────────────
-app.get("/api/weddings", (req, res) => res.json(loadData().weddings));
+app.get("/api/weddings", (req, res) => res.json(await loadData().weddings));
 
 app.delete("/api/weddings/:id", (req, res) => {
-  const data = loadData();
+  const data = await loadData();
   data.weddings = data.weddings.filter(w => w.id !== req.params.id);
-  saveData(data);
+  await saveData(data);
   res.json({ ok: true });
 });
 
 app.put("/api/weddings/:id", (req, res) => {
-  const data = loadData();
+  const data = await loadData();
   const w = data.weddings.find(w => w.id === req.params.id);
   if (w) Object.assign(w, req.body);
-  saveData(data);
+  await saveData(data);
   res.json(w || { error: "not found" });
 });
 
